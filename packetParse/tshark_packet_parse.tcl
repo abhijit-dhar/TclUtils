@@ -1,8 +1,15 @@
 source ./stack.tcl
 proc parsePacket {file_name {mycount -1}} {
+    set retval ""
     stack::init
     set command "tshark -T pdml -r $file_name"
-    set channel [open "|$command" r]
+
+    if {[catch {set channel [open "|$command" r]}]} {
+	puts "tshark utility is not found!"
+        puts "error -> $::errorInfo"
+	return $retval
+    }
+
     set count 0
     while {[gets $channel line] > -1} {
         if {$line == "<packet>"} {
@@ -21,10 +28,11 @@ proc parsePacket {file_name {mycount -1}} {
         
         if {$mycount == $count} {
             set retval $temp_packet
-            return $retval
+	    break
         }       
     }
-    close $channel
+    catch {close $channel}
+    return $retval
 }
 
 set retval [parsePacket "sample.cap" 10]
